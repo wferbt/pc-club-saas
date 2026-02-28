@@ -1,0 +1,11 @@
+{
+  "name": "pc-club-saas",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "echo \"Use: npm --workspace apps/api run dev\""
+  }
+}

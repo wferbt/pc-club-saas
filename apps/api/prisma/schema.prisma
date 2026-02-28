@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+}
+
+enum MachineStatus {
+  OFFLINE
+  IDLE
+  IN_SESSION
+  LOCKED
+}
+
+enum SessionStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum CommandType {
+  LOCK
+  UNLOCK
+  START_SESSION
+  END_SESSION
+  EXTEND
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(OPERATOR)
+  createdAt DateTime @default(now())
+}
+
+model Club {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  address   String
+  createdAt DateTime @default(now())
+
+  machines Machine[]
+  tariffs  Tariff[]
+}
+
+model Machine {
+  id     String @id @default(cuid())
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  code       String
+  zone       String
+  hostname   String?
+  os         String?
+  ip         String?
+  status     MachineStatus @default(OFFLINE)
+  lastSeenAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  sessions Session[]
+  commands Command[]
+
+  @@unique([clubId, code])
+}
+
+model Tariff {
+  id     String @id @default(cuid())
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  name        String
+  price       Int
+  durationMin Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  sessions Session[]
+}
+
+model Session {
+  id        String  @id @default(cuid())
+  machineId String
+  machine   Machine @relation(fields: [machineId], references: [id])
+
+  tariffId String?
+  tariff   Tariff? @relation(fields: [tariffId], references: [id])
+
+  startedAt DateTime      @default(now())
+  endsAt    DateTime
+  status    SessionStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+}
+
+model Command {
+  id        String  @id @default(cuid())
+  machineId String
+  machine   Machine @relation(fields: [machineId], references: [id])
+
+  type      CommandType
+  payload   Json?
+  createdAt DateTime    @default(now())
+
+  deliveredAt DateTime?
+  appliedAt   DateTime?
+}
